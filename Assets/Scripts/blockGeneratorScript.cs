@@ -25,8 +25,8 @@ public class blockGeneratorScript : MonoBehaviour
 
     void makeGround()
     {
-       
-        GroundPlate = ShapeGenerator.GenerateCube();
+        Vector3 groundSize= new Vector3(cubeWidth, cubeDepth, cubeHeight);
+        GroundPlate = ShapeGenerator.GenerateCube(  PivotLocation.Center, groundSize );
 
         GroundPlate.gameObject.name = "GroundPlate";
 
