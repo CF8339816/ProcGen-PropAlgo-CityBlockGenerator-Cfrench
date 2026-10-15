@@ -1,16 +1,45 @@
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.ProBuilder; // Required for ProBuilder types
 
 public class blockGeneratorScript : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    [Header("Ground Plate")]
+    public float cubeWidth = 50f;
+    public float cubeHeight = 50f;
+    public float cubeDepth = 1f;
+    public int widthSegments = 20;
+    public int heightSegments = 20;
+    public int depthSegments = 1;
+    public Material Ground;
+
+
+
+    private ProBuilderMesh GroundPlate;
+
     void Start()
     {
-        
+        makeGround();
+       
     }
 
-    // Update is called once per frame
-    void Update()
+    void makeGround()
     {
-        
+       
+        GroundPlate = ShapeGenerator.GenerateCube();
+
+        GroundPlate.gameObject.name = "GroundPlate";
+
+       
+        MeshRenderer renderer = GroundPlate.GetComponent<MeshRenderer>();
+        renderer.sharedMaterial = Ground != null ? Ground : BuiltinMaterials.defaultMaterial;
+
+        GroundPlate.ToMesh();
+        GroundPlate.Refresh();
+        GroundPlate.gameObject.AddComponent<MeshCollider>();
     }
+
+   
+
+  
 }
