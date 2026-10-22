@@ -1,21 +1,18 @@
 using System;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.ProBuilder; // Required for ProBuilder types
 using UnityEngine.VFX;
+using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 
 public class blockGeneratorScript : MonoBehaviour
-
-
 {
-    [Header("Ground Plate")]
-    public float cubeWidth = 50f; //x axis width
-    public float cubeHeight = 1f;  // y axis height (cause it felt akward previously referring to it as depth in the maths)
-    public float cubeDepth = 50f; // z axis depth(lenght)
-    public int widthSegments = 20;
-    public int heightSegments = 1;
-    public int depthSegments = 20;
+    [Header("Ground Plate Settings")]
+    public float cubeWidth = 50f;   // Horizontal size along X axis
+    public float cubeHeight = 1f;   // Upward vertical thickness along Y axis
+    public float cubeDepth = 50f;   // Horizontal length along Z axis
     public Material Ground;
 
     [SerializeField] public int NumPlatesWideX = 4;
@@ -30,175 +27,42 @@ public class blockGeneratorScript : MonoBehaviour
 
     void makeGround()
     {
-       // float GroundArea = NumPlatesWideX * NumPlatesLongZ;// defines total plates required for requested surface area
-        groundGridContainer = new GameObject("GroundGrid"); // creates the 'Parent container object the tiles will be spawned in 
-        groundGridContainer.transform.position = Vector3.zero;// gives this container a location for the loop to generate from
-
-        Vector3 groundSize = new Vector3(cubeWidth, cubeDepth, cubeHeight);
+       
+        groundGridContainer = new GameObject("GroundGrid");
+        groundGridContainer.transform.position = Vector3.zero;
 
         int tileIndex = 0;
 
-        //for (int i = 0; i < GroundArea; i++)
-
-            for (int R = 0; R < NumPlatesLongZ; R++) // loops and spawns the plates needed for the area requested
+        
+        for (int R = 0; R < NumPlatesLongZ; R++)
+        {
+            for (int C = 0; C < NumPlatesWideX; C++)
             {
-                for (int C = 0; C < NumPlatesWideX; C++)  // calculates  local positions for plates being generated per plate
-                                                          // placing them  from the centeral plate outward in a raidius around
-                                                          // it to fill the area
+                
+                float posX = C * cubeWidth;
+                float posY = 0f;
+                float posZ = R * cubeDepth;
+                Vector3 platePosition = new Vector3(posX, posY, posZ);
+
+              
+                GameObject groundPlate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+
+               
+                groundPlate.name = $"GroundPlate_Index_{tileIndex}_(Col_{C},Row_{R})";
+                groundPlate.transform.position = platePosition;
+                groundPlate.transform.SetParent(groundGridContainer.transform);
+
+                groundPlate.transform.localScale = new Vector3(cubeWidth, cubeHeight, cubeDepth);
+
+               
+                MeshRenderer renderer = groundPlate.GetComponent<MeshRenderer>();
+                if (renderer != null && Ground != null)
                 {
-
-                    //        int gridX = i % NumPlatesWideX;// provides tile's position in the column
-                    //int gridY =  0;
-                    // int gridZ = i / NumPlatesWideX;// provided tile's current posiotion in the row
-
-                    //float posX = gridX * cubeWidth; // provides location coordinates based on colume position
-                    //float posY = gridY * cubeHeight;
-                    //float posZ = gridZ * cubeDepth;// provides location position based on row position
-                    float posX = C * cubeWidth;
-                    float posY = 0 * cubeHeight;
-                    float posZ = R * cubeDepth;
-            Vector3 platePosition = new Vector3(posX, posY, posZ);
-
-                ProBuilderMesh groundPlate = ShapeGenerator.GenerateCube(PivotLocation.Center, groundSize);// generates tile
-
-                    //groundPlate.gameObject.name = $"GroundPlate_Index_{i}_({gridX},{gridY},{gridZ})"; // provides unique name for each tile 
-                    groundPlate.gameObject.name = $"GroundPlate_Index_{tileIndex}_(Col_{C},Row_{R})";
-                    groundPlate.gameObject.transform.position = platePosition;// places  tile in world
-                groundPlate.gameObject.transform.SetParent(groundGridContainer.transform);// Sets tiles to parent
-
-            MeshRenderer renderer = groundPlate.GetComponent<MeshRenderer>();
-            renderer.sharedMaterial = Ground != null ? Ground : BuiltinMaterials.defaultMaterial;
-
-            groundPlate.ToMesh();
-                groundPlate.Refresh();
-                groundPlate.gameObject.AddComponent<MeshCollider>();
+                    renderer.sharedMaterial = Ground;
+                }
 
                 tileIndex++;
             }
         }
     }
 }
-
-
-#region old code
-//public class blockGeneratorScript : MonoBehaviour
-//{
-
-
-//    [Header("Ground Plate")]
-//    public float cubeWidth = 50f;
-//    public float cubeDepth = 50f;
-//    public float cubeHeight = 1f;
-//    public int widthSegments = 20;
-//    public int depthSegments = 20;
-//    public int heightSegments = 1;
-//    public Material Ground;
-//    [SerializeField] public int NumPlatesWideX;
-//    [SerializeField] public int NumPlatesLongY;
-//    private GameObject ground;
-
-//    [Header("Roadway")]
-//    public float RoadWidthMin = 1f;
-//    public float RoadDepthMin = 1f;
-//    public float RoadWidthMax = 6f;
-//    public float RoadDepthMax = 18f;
-//    public float RoadHeight = 1f;
-//    public int RoadwidthSegments;
-//    public int RoaddepthSegments;
-//    public int RoadheightSegments;
-//    public Material Road;
-
-//    private GameObject road;
-
-//    [Header("Building")]
-
-//    public float BuildWidthMin = 1f;
-//    public float BuildDepthMin = 1f;
-//    public float BuildHeightMin = 1f;
-//    public float BuildWidthMax = 6f;
-//    public float BuildDepthMax = 18f;
-//    public float BuildHeightMax = 6f;
-//    public int BuildwidthSegments;
-//    public int BuilddepthSegments;
-//    public int BuildheightSegments;
-//    public Material Build;
-
-//    private GameObject build;
-
-//    private ProBuilderMesh GroundPlate;
-
-//    void Start()
-//    {
-//        makeMap();
-
-//    }
-//    void makeMap()
-//    {
-//        int NumberOfPlatesNeeded = NumPlatesLongY * NumPlatesWideX;
-
-
-//        makeGround();
-
-
-
-//    }
-//    void makeGround()
-//    {
-//        Vector3 groundSize = new Vector3(cubeWidth, cubeHeight, cubeDepth);
-//        GroundPlate = ShapeGenerator.GenerateCube(PivotLocation.Center, groundSize);
-
-//        GroundPlate.gameObject.name = "GroundPlate";
-
-//        MeshRenderer renderer = GroundPlate.GetComponent<MeshRenderer>();
-//        renderer.sharedMaterial = Ground != null ? Ground : BuiltinMaterials.defaultMaterial;
-
-//        GroundPlate.ToMesh();
-//        GroundPlate.Refresh();
-//        GroundPlate.gameObject.AddComponent<MeshCollider>();
-//    }
-
-//    void makeRoads()
-//    {
-//        float RoadWidth = Random.Range(RoadWidthMin, RoadWidthMax);
-//        float RoadDepth = Random.Range(RoadDepthMin, RoadDepthMax);
-
-
-//        Vector3 RoadSize = new Vector3(RoadWidth, RoadDepth, RoadHeight);
-//        GroundPlate = ShapeGenerator.GenerateCube(PivotLocation.Center, RoadSize);
-
-//        GroundPlate.gameObject.name = "RoadWay";
-
-//        MeshRenderer renderer = GroundPlate.GetComponent<MeshRenderer>();
-//        renderer.sharedMaterial = Road != null ? Road : BuiltinMaterials.defaultMaterial;
-
-//        GroundPlate.ToMesh();
-//        GroundPlate.Refresh();
-//        GroundPlate.gameObject.AddComponent<MeshCollider>();
-
-//    }
-
-//    void makeBuildings()
-//    {
-
-//        //if (RoadWay = null)
-//        //{
-//        float BuildWidth = Random.Range(BuildWidthMin, BuildWidthMax);
-//        float BuildHeight = Random.Range(BuildHeightMin, BuildHeightMax);
-//        float BuildDepth = Random.Range(BuildDepthMin, BuildDepthMax);
-
-//        Vector3 groundSize = new Vector3(BuildWidth, BuildHeight, BuildDepth);
-//        GroundPlate = ShapeGenerator.GenerateCube(PivotLocation.Center, groundSize);
-
-//        GroundPlate.gameObject.name = "Building";
-
-//        MeshRenderer renderer = GroundPlate.GetComponent<MeshRenderer>();
-//        renderer.sharedMaterial = Ground != null ? Ground : BuiltinMaterials.defaultMaterial;
-
-//        GroundPlate.ToMesh();
-//        GroundPlate.Refresh();
-//        GroundPlate.gameObject.AddComponent<MeshCollider>();
-//        //}
-
-//    }
-//}
-#endregion
