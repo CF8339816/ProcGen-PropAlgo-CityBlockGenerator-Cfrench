@@ -1,3 +1,4 @@
+using System;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.ProBuilder; // Required for ProBuilder types
@@ -18,7 +19,7 @@ public class blockGeneratorScript : MonoBehaviour
     public Material Ground;
 
     [SerializeField] public int NumPlatesWideX = 4;
-    [SerializeField] public int NumPlatesLongY = 3;
+    [SerializeField] public int NumPlatesLongZ = 3;
 
     private GameObject groundGridContainer;
 
@@ -29,33 +30,40 @@ public class blockGeneratorScript : MonoBehaviour
 
     void makeGround()
     {
-        float GroundArea = NumPlatesWideX * NumPlatesLongY;// defines total plates required for requested surface area
+       // float GroundArea = NumPlatesWideX * NumPlatesLongZ;// defines total plates required for requested surface area
         groundGridContainer = new GameObject("GroundGrid"); // creates the 'Parent container object the tiles will be spawned in 
         groundGridContainer.transform.position = Vector3.zero;// gives this container a location for the loop to generate from
 
         Vector3 groundSize = new Vector3(cubeWidth, cubeDepth, cubeHeight);
 
-        for (int i = 0; i < GroundArea; i++)
-        //for (int x = 0; x < NumPlatesWideX; x++) // loops and spawns the plates needed for the area requested
-        //{
-        //    for (int z = 0; z < NumPlatesLongY; z++)  // calculates  local positions for plates being generated per plate
-        //                                              // placing them  from the centeral plate outward in a raidius around
-        //                                              // it to fill the area
-        {
+        int tileIndex = 0;
 
-            int gridX = i % NumPlatesWideX;// provides tile's position in the column
-            int gridZ = i / NumPlatesWideX;// provided tile's current posiotion in the row
+        //for (int i = 0; i < GroundArea; i++)
 
-            float posX = gridX * cubeWidth; // provides location coordinates based on colume position
-            float posZ = gridZ * cubeDepth;// provides location position based on row position
-            //float posX = x * cubeWidth;
-            //    float posZ = z * cubeDepth;
-            Vector3 platePosition = new Vector3(posX, 0f, posZ);
+            for (int R = 0; R < NumPlatesLongZ; R++) // loops and spawns the plates needed for the area requested
+            {
+                for (int C = 0; C < NumPlatesWideX; C++)  // calculates  local positions for plates being generated per plate
+                                                          // placing them  from the centeral plate outward in a raidius around
+                                                          // it to fill the area
+                {
+
+                    //        int gridX = i % NumPlatesWideX;// provides tile's position in the column
+                    //int gridY =  0;
+                    // int gridZ = i / NumPlatesWideX;// provided tile's current posiotion in the row
+
+                    //float posX = gridX * cubeWidth; // provides location coordinates based on colume position
+                    //float posY = gridY * cubeHeight;
+                    //float posZ = gridZ * cubeDepth;// provides location position based on row position
+                    float posX = C * cubeWidth;
+                    float posY = 0 * cubeHeight;
+                    float posZ = R * cubeDepth;
+            Vector3 platePosition = new Vector3(posX, posY, posZ);
 
                 ProBuilderMesh groundPlate = ShapeGenerator.GenerateCube(PivotLocation.Center, groundSize);// generates tile
 
-                groundPlate.gameObject.name = $"GroundPlate_Index_{i}_({gridX},{gridZ})"; // provides unique name for each tile 
-                groundPlate.gameObject.transform.position = platePosition;// places  tile in world
+                    //groundPlate.gameObject.name = $"GroundPlate_Index_{i}_({gridX},{gridY},{gridZ})"; // provides unique name for each tile 
+                    groundPlate.gameObject.name = $"GroundPlate_Index_{tileIndex}_(Col_{C},Row_{R})";
+                    groundPlate.gameObject.transform.position = platePosition;// places  tile in world
                 groundPlate.gameObject.transform.SetParent(groundGridContainer.transform);// Sets tiles to parent
 
             MeshRenderer renderer = groundPlate.GetComponent<MeshRenderer>();
@@ -64,8 +72,10 @@ public class blockGeneratorScript : MonoBehaviour
             groundPlate.ToMesh();
                 groundPlate.Refresh();
                 groundPlate.gameObject.AddComponent<MeshCollider>();
+
+                tileIndex++;
             }
-        //}
+        }
     }
 }
 
