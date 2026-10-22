@@ -65,7 +65,7 @@ public class blockGeneratorScript : MonoBehaviour
     }
     void makeGround()
     {
-        Vector3 groundSize= new Vector3(cubeWidth, cubeHeight, cubeDepth );
+        Vector3 groundSize= new Vector3(cubeWidth, cubeDepth, cubeHeight  );
         GroundPlate = ShapeGenerator.GenerateCube(  PivotLocation.Center, groundSize );
 
         GroundPlate.gameObject.name = "GroundPlate";
@@ -101,8 +101,8 @@ public class blockGeneratorScript : MonoBehaviour
     void makeBuildings()
     {
 
-        if (RoadWay = null)
-        {
+        //if (RoadWay = null)
+        //{
             float BuildWidth = Random.Range(BuildWidthMin, BuildWidthMax);
             float BuildHeight = Random.Range(BuildHeightMin, BuildHeightMax);
             float BuildDepth = Random.Range(BuildDepthMin, BuildDepthMax);
@@ -118,7 +118,7 @@ public class blockGeneratorScript : MonoBehaviour
             GroundPlate.ToMesh();
             GroundPlate.Refresh();
             GroundPlate.gameObject.AddComponent<MeshCollider>();
-        }
+        //}
 
     }
 }
