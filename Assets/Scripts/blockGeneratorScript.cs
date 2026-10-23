@@ -59,10 +59,6 @@ public class blockGeneratorScript : MonoBehaviour
             Debug.LogWarning($"[FAIL] Unable to parse '{inputValue}'. Clean length: {cleanInput.Length}");
         }
     }
-
-
-
-
     public void onMakeCity()
     {
         if (groundGridContainer != null) { Destroy(groundGridContainer); }
@@ -229,34 +225,40 @@ public class blockGeneratorScript : MonoBehaviour
                         float buildLengthZ = UnityEngine.Random.Range(1f, 6f);// generates random building length
                                         
                         if (checkX + buildWidthX > localEndX || checkZ + buildLengthZ > localEndZ) continue;// ensures no overhanging buildings
-                                             
-                        float footprintArea = buildWidthX * buildLengthZ;           // these lines  sedt up  a randomized height that is soft capped based
-                        float normalizedArea = (footprintArea - 1f) / (36f - 1f);   // on the dimensions of the building bases  smaller cap shorter
-                        float buildHeightY = Mathf.Lerp(2f, 20f, normalizedArea);   // larger cap higher in their ranges
-                                             
-                        float targetCenterX = checkX + (buildWidthX / 2f);
-                        float targetCenterZ = checkZ + (buildLengthZ / 2f);
-                        float targetCenterY = (buildHeightY / 2f) + (tileHeightY / 2f);
-                        Vector3 finalizedBuildingPosition = new Vector3(targetCenterX, targetCenterY, targetCenterZ);
-                                          
-                        GameObject building = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        building.name = $"Building_({buildWidthX:F1}x{buildLengthZ:F1})_Height_{buildHeightY:F1}";
-                        building.transform.position = finalizedBuildingPosition;
 
-                        building.transform.localScale = new Vector3(buildWidthX, buildHeightY, buildLengthZ);
-                        building.transform.SetParent(buildingContainer.transform);
-                      
-                        if (building.GetComponent<BoxCollider>() != null)
+
+                        int evaluatedGridX = Mathf.Clamp(Mathf.FloorToInt((checkX + (buildWidthX / 2f)) / tileWidthX), 0, NumPlatesWideX - 1);//checks width for road 
+                        int evaluatedGridZ = Mathf.Clamp(Mathf.FloorToInt((checkZ + (buildLengthZ / 2f)) / tileLengthZ), 0, NumPlatesLongZ - 1);// checks length for road
+
+                        if (roadLocations[evaluatedGridX, evaluatedGridZ] == false)
                         {
-                            Destroy(building.GetComponent<BoxCollider>());
+                            float footprintArea = buildWidthX * buildLengthZ;           // these lines  sedt up  a randomized height that is soft capped based
+                            float normalizedArea = (footprintArea - 1f) / (36f - 1f);   // on the dimensions of the building bases  smaller cap shorter
+                            float buildHeightY = Mathf.Lerp(2f, 20f, normalizedArea);   // larger cap higher in their ranges
+
+                            float targetCenterX = checkX + (buildWidthX / 2f);
+                            float targetCenterZ = checkZ + (buildLengthZ / 2f);
+                            float targetCenterY = (buildHeightY / 2f) + (tileHeightY / 2f);
+                            Vector3 finalizedBuildingPosition = new Vector3(targetCenterX, targetCenterY, targetCenterZ);
+
+                            GameObject building = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                            building.name = $"Building_({buildWidthX:F1}x{buildLengthZ:F1})_Height_{buildHeightY:F1}";
+                            building.transform.position = finalizedBuildingPosition;
+
+                            building.transform.localScale = new Vector3(buildWidthX, buildHeightY, buildLengthZ);
+                            building.transform.SetParent(buildingContainer.transform);
+
+                            if (building.GetComponent<BoxCollider>() != null)
+                            {
+                                Destroy(building.GetComponent<BoxCollider>());
+                            }
+
+                            MeshRenderer renderer = building.GetComponent<MeshRenderer>();
+                            if (renderer != null && BuildingMat != null)
+                            {
+                                renderer.sharedMaterial = BuildingMat;
+                            }
                         }
-                       
-                        MeshRenderer renderer = building.GetComponent<MeshRenderer>();
-                        if (renderer != null && BuildingMat != null)
-                        {
-                            renderer.sharedMaterial = BuildingMat;
-                        }
-                       
                         checkZ += buildLengthZ + buildingBufferSpace;
                     }
                 }
