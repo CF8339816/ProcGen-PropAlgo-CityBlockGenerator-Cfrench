@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 
 public class blockGeneratorScript : MonoBehaviour
@@ -199,70 +200,138 @@ public class blockGeneratorScript : MonoBehaviour
     {
         buildingContainer = new GameObject("BuildingZone");// makes container for buildings
         buildingContainer.transform.position = Vector3.zero;
+        float maxWorldWidthX = NumPlatesWideX * tileWidthX;
+        float maxWorldLengthZ = NumPlatesLongZ * tileLengthZ;
 
-        for (int r = 0; r < NumPlatesLongZ; r++)
+        for (float checkX = buildingBufferSpace; checkX < maxWorldWidthX - buildingBufferSpace; checkX += 6f)
         {
-            for (int c = 0; c < NumPlatesWideX; c++)
-            {                
-                if (roadLocations[c, r]) continue;// skips tile if in a road zone
-                            
-                float baseTileWorldX = c * tileWidthX; // gets building base width
-                float baseTileWorldZ = r * tileLengthZ; //gets building base length
-                           
-                float halfTileX = tileWidthX / 2f;// creates width loop for checking
-                float halfTileZ = tileLengthZ / 2f; // creates length loop for checking
+            for (float checkZ = buildingBufferSpace; checkZ < maxWorldLengthZ - buildingBufferSpace; checkZ += 6f)
+            {
+                float buildWidthX = UnityEngine.Random.Range(1.5f, 4.5f);
+                float buildLengthZ = UnityEngine.Random.Range(1.5f, 4.5f);
 
-                float localStartX = baseTileWorldX - halfTileX + buildingBufferSpace;
-                float localStartZ = baseTileWorldZ - halfTileZ + buildingBufferSpace;
-                float localEndX = baseTileWorldX + halfTileX - buildingBufferSpace;
-                float localEndZ = baseTileWorldZ + halfTileZ - buildingBufferSpace;
-                             
-                for (float checkX = localStartX; checkX < localEndX; checkX += 6f)// spawns  building clusters as it steps through the full base area map
+                float buildingCenterX = checkX + (buildWidthX / 2f);
+                float buildingCenterZ = checkZ + (buildLengthZ / 2f);
+                
+                bool positionIsOnRoad = IsCoordinateOverlappingARoad(buildingCenterX, buildingCenterZ);
+
+                if (!positionIsOnRoad)
                 {
-                    for (float checkZ = localStartZ; checkZ < localEndZ; checkZ += 6f)
-                    {                       
-                        float buildWidthX = UnityEngine.Random.Range(1f, 6f);// generates random building width
-                        float buildLengthZ = UnityEngine.Random.Range(1f, 6f);// generates random building length
-                                        
-                        if (checkX + buildWidthX > localEndX || checkZ + buildLengthZ > localEndZ) continue;// ensures no overhanging buildings
+                    float footprintArea = buildWidthX * buildLengthZ;
+                    float normalizedArea = (footprintArea - 1f) / (25f - 1f);
+                    float buildHeightY = Mathf.Lerp(3f, 25f, normalizedArea);
 
+                    float targetCenterY = (buildHeightY / 2f) + (tileHeightY / 2f);
+                    Vector3 finalizedBuildingPosition = new Vector3(buildingCenterX, targetCenterY, buildingCenterZ);
 
-                        int evaluatedGridX = Mathf.Clamp(Mathf.FloorToInt((checkX + (buildWidthX / 2f)) / tileWidthX), 0, NumPlatesWideX - 1);//checks width for road 
-                        int evaluatedGridZ = Mathf.Clamp(Mathf.FloorToInt((checkZ + (buildLengthZ / 2f)) / tileLengthZ), 0, NumPlatesLongZ - 1);// checks length for road
+                    GameObject building = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    building.name = $"Building_At_({buildingCenterX:F1},{buildingCenterZ:F1})";
+                    building.transform.position = finalizedBuildingPosition;
+                    building.transform.localScale = new Vector3(buildWidthX, buildHeightY, buildLengthZ);
+                    building.transform.SetParent(buildingContainer.transform);
 
-                        if (roadLocations[evaluatedGridX, evaluatedGridZ] == false)
-                        {
-                            float footprintArea = buildWidthX * buildLengthZ;           // these lines  sedt up  a randomized height that is soft capped based
-                            float normalizedArea = (footprintArea - 1f) / (36f - 1f);   // on the dimensions of the building bases  smaller cap shorter
-                            float buildHeightY = Mathf.Lerp(2f, 20f, normalizedArea);   // larger cap higher in their ranges
+                    if (building.GetComponent<BoxCollider>() != null)
+                    {
+                        Destroy(building.GetComponent<BoxCollider>());
+                    }
 
-                            float targetCenterX = checkX + (buildWidthX / 2f);
-                            float targetCenterZ = checkZ + (buildLengthZ / 2f);
-                            float targetCenterY = (buildHeightY / 2f) + (tileHeightY / 2f);
-                            Vector3 finalizedBuildingPosition = new Vector3(targetCenterX, targetCenterY, targetCenterZ);
-
-                            GameObject building = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                            building.name = $"Building_({buildWidthX:F1}x{buildLengthZ:F1})_Height_{buildHeightY:F1}";
-                            building.transform.position = finalizedBuildingPosition;
-
-                            building.transform.localScale = new Vector3(buildWidthX, buildHeightY, buildLengthZ);
-                            building.transform.SetParent(buildingContainer.transform);
-
-                            if (building.GetComponent<BoxCollider>() != null)
-                            {
-                                Destroy(building.GetComponent<BoxCollider>());
-                            }
-
-                            MeshRenderer renderer = building.GetComponent<MeshRenderer>();
-                            if (renderer != null && BuildingMat != null)
-                            {
-                                renderer.sharedMaterial = BuildingMat;
-                            }
-                        }
-                        checkZ += buildLengthZ + buildingBufferSpace;
+                    MeshRenderer renderer = building.GetComponent<MeshRenderer>();
+                    if (renderer != null && BuildingMat != null)
+                    {
+                        renderer.sharedMaterial = BuildingMat;
                     }
                 }
+                checkZ += buildLengthZ + buildingBufferSpace;
             }
         }
     }
+    bool IsCoordinateOverlappingARoad(float x, float z)
+    {
+        if (roadContainer == null) return false;
+
+        foreach (Transform roadSegment in roadContainer.transform)
+        {
+            Vector3 pos = roadSegment.position;
+            Vector3 scale = roadSegment.localScale;
+
+            float minX = pos.x - (scale.x / 2f) - buildingBufferSpace;
+            float maxX = pos.x + (scale.x / 2f) + buildingBufferSpace;
+            float minZ = pos.z - (scale.z / 2f) - buildingBufferSpace;
+            float maxZ = pos.z + (scale.z / 2f) + buildingBufferSpace;
+
+            if (x >= minX && x <= maxX && z >= minZ && z <= maxZ)
+            {
+                return true;
+            }
+        }
+        return false; 
+    }
+ 
+
+
+
+
+
+    //    for (int r = 0; r < NumPlatesLongZ; r++)
+    //    {
+    //        for (int c = 0; c < NumPlatesWideX; c++)
+    //        {                
+    //            if (roadLocations[c, r]) continue;// skips tile if in a road zone
+
+    //            float tileLeftEdgeX = c * tileWidthX;
+    //            float tileBottomEdgeZ = r * tileLengthZ;
+
+    //            float localStartX = tileLeftEdgeX + buildingBufferSpace;
+    //            float localStartZ = tileBottomEdgeZ + buildingBufferSpace;
+    //            float localEndX = tileLeftEdgeX + tileWidthX - buildingBufferSpace;
+    //            float localEndZ = tileBottomEdgeZ + tileLengthZ - buildingBufferSpace;
+
+    //            for (float checkX = localStartX; checkX < localEndX; checkX += 6f)// spawns  building clusters as it steps through the full base area map
+    //            {
+    //                for (float checkZ = localStartZ; checkZ < localEndZ; checkZ += 6f)
+    //                {                       
+    //                    float buildWidthX = UnityEngine.Random.Range(1f, 5f);// generates random building width
+    //                    float buildLengthZ = UnityEngine.Random.Range(1f, 5f);// generates random building length
+
+    //                    if (checkX + buildWidthX > localEndX || checkZ + buildLengthZ > localEndZ) continue;// ensures no overhanging buildings
+
+    //                    float buildingCenterX = checkX + (buildWidthX / 2f);
+    //                    float buildingCenterZ = checkZ + (buildLengthZ / 2f);
+
+    //                    int evaluatedGridX = Mathf.Clamp(Mathf.FloorToInt((checkX + (buildWidthX / 2f)) / tileWidthX), 0, NumPlatesWideX - 1);//checks width for road 
+    //                    int evaluatedGridZ = Mathf.Clamp(Mathf.FloorToInt((checkZ + (buildLengthZ / 2f)) / tileLengthZ), 0, NumPlatesLongZ - 1);// checks length for road
+
+    //                    if (!roadLocations[evaluatedGridX, evaluatedGridZ])
+    //                    {
+    //                        float footprintArea = buildWidthX * buildLengthZ;           // these lines  sedt up  a randomized height that is soft capped based
+    //                        float normalizedArea = (footprintArea - 1f) / (25f - 1f);   // on the dimensions of the building bases  smaller cap shorter
+    //                        float buildHeightY = Mathf.Lerp(2f, 20f, normalizedArea);   // larger cap higher in their ranges
+
+    //                        float targetCenterY = (buildHeightY / 2f) + (tileHeightY / 2f);
+    //                        Vector3 finalizedBuildingPosition = new Vector3(buildingCenterX, targetCenterY, buildingCenterZ);
+
+    //                        GameObject building = GameObject.CreatePrimitive(PrimitiveType.Cube);
+    //                        building.name = $"Building_(Col_{c},Row_{r})_GridX{evaluatedGridX}_GridZ{evaluatedGridZ}";
+    //                        building.transform.position = finalizedBuildingPosition;
+
+    //                        building.transform.localScale = new Vector3(buildWidthX, buildHeightY, buildLengthZ);
+    //                        building.transform.SetParent(buildingContainer.transform);
+
+    //                        if (building.GetComponent<BoxCollider>() != null)
+    //                        {
+    //                            Destroy(building.GetComponent<BoxCollider>());
+    //                        }
+
+    //                        MeshRenderer renderer = building.GetComponent<MeshRenderer>();
+    //                        if (renderer != null && BuildingMat != null)
+    //                        {
+    //                            renderer.sharedMaterial = BuildingMat;
+    //                        }
+    //                    }
+    //                    checkZ += buildLengthZ + buildingBufferSpace;
+    //                }
+    //            }
+    //        }
+    //    }
+    //}
 }
