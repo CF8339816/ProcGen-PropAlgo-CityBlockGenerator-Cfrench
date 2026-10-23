@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
+
 
 public class blockGeneratorScript : MonoBehaviour
 {
@@ -13,8 +16,11 @@ public class blockGeneratorScript : MonoBehaviour
     public Material Road;
     public Material BuildingMat;
     [Header("Grid Counts")]
-    [SerializeField] public int NumPlatesWideX = 10;
-    [SerializeField] public int NumPlatesLongZ = 15;
+    [SerializeField] public int NumPlatesWideX = 1;
+    [SerializeField] public int NumPlatesLongZ = 1;
+    public TMP_InputField InputFieldWideInputField;
+    public TMP_InputField InputFieldlongInputField;
+
     private GameObject groundGridContainer;
     private GameObject roadContainer;
     private GameObject buildingContainer;
@@ -22,10 +28,46 @@ public class blockGeneratorScript : MonoBehaviour
 
     void Start()
     {
-        makeCity();
+        onMakeCity();
     }
-    void makeCity()
+  public void SetCityBlocksWide(string inputValue)
     {
+        string cleanInput = inputValue.Replace("\u200B", "").Trim();
+
+        if (int.TryParse(cleanInput, out int result))
+        {
+            NumPlatesWideX = Mathf.Clamp(result, 1, 100);
+            Debug.Log($"[SUCCESS] NumPlatesWideX changed in memory to: {NumPlatesWideX}");
+        }
+        else
+        {
+            Debug.LogWarning($"[FAIL] Unable to parse '{inputValue}'. Clean length: {cleanInput.Length}");
+        }
+    }
+
+    public void SetCityBlockslong(string inputValue)
+    {
+        string cleanInput = inputValue.Replace("\u200B", "").Trim();
+
+        if (int.TryParse(cleanInput, out int result))
+        {
+            NumPlatesLongZ = Mathf.Clamp(result, 1, 100);
+            Debug.Log($"[SUCCESS] NumPlatesLongZ changed in memory to: {NumPlatesLongZ}");
+        }
+        else
+        {
+            Debug.LogWarning($"[FAIL] Unable to parse '{inputValue}'. Clean length: {cleanInput.Length}");
+        }
+    }
+
+
+
+
+    public void onMakeCity()
+    {
+        if (groundGridContainer != null) { Destroy(groundGridContainer); }
+        if (roadContainer != null) { Destroy(roadContainer); }
+        if (buildingContainer != null) { Destroy(buildingContainer); }
         roadLocations = new bool[NumPlatesWideX, NumPlatesLongZ];
         makeGround();
         makeRoads();
