@@ -202,6 +202,8 @@ public class blockGeneratorScript : MonoBehaviour
         buildingContainer.transform.position = Vector3.zero;
         float maxWorldWidthX = NumPlatesWideX * tileWidthX;
         float maxWorldLengthZ = NumPlatesLongZ * tileLengthZ;
+        Vector3 alignmentCorrection = new Vector3(-22f, 0f, -20.5f);
+
 
         for (float checkX = buildingBufferSpace; checkX < maxWorldWidthX - buildingBufferSpace; checkX += 6f)
         {
@@ -212,7 +214,7 @@ public class blockGeneratorScript : MonoBehaviour
 
                 float buildingCenterX = checkX + (buildWidthX / 2f);
                 float buildingCenterZ = checkZ + (buildLengthZ / 2f);
-                
+
                 bool positionIsOnRoad = IsCoordinateOverlappingARoad(buildingCenterX, buildingCenterZ);
 
                 if (!positionIsOnRoad)
@@ -222,7 +224,7 @@ public class blockGeneratorScript : MonoBehaviour
                     float buildHeightY = Mathf.Lerp(3f, 25f, normalizedArea);
 
                     float targetCenterY = (buildHeightY / 2f) + (tileHeightY / 2f);
-                    Vector3 finalizedBuildingPosition = new Vector3(buildingCenterX, targetCenterY, buildingCenterZ);
+                    Vector3 finalizedBuildingPosition = new Vector3(buildingCenterX, targetCenterY, buildingCenterZ) + alignmentCorrection;
 
                     GameObject building = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     building.name = $"Building_At_({buildingCenterX:F1},{buildingCenterZ:F1})";
