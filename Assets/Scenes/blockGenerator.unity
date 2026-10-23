@@ -393,7 +393,7 @@ GameObject:
   m_Component:
   - component: {fileID: 588339994}
   m_Layer: 0
-  m_Name: RoadBlock
+  m_Name: HUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -474,7 +474,7 @@ GameObject:
   - component: {fileID: 1218711659}
   - component: {fileID: 1218711658}
   m_Layer: 0
-  m_Name: groundBlock
+  m_Name: cityBlock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -495,8 +495,10 @@ MonoBehaviour:
   tileWidthX: 50
   tileHeightY: 1
   tileLengthZ: 50
+  buildingBufferSpace: 1
   Ground: {fileID: 2100000, guid: b52a89925c09f904a8507fb480ac1eea, type: 2}
   Road: {fileID: 0}
+  BuildingMat: {fileID: 0}
   NumPlatesWideX: 4
   NumPlatesLongZ: 3
 --- !u!4 &1218711659
